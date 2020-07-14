@@ -20,8 +20,6 @@ func main() {
 		wg.Add(2)
 		go func(wg *sync.WaitGroup, m *sync.RWMutex, ch chan<- Book) {
 			if b, ok := queryCache(id, m); ok {
-				// fmt.Println("from cache")
-				// fmt.Println(b)
 				ch <- b
 			}
 			wg.Done()
@@ -32,8 +30,6 @@ func main() {
 				cache[id] = b
 				m.Unlock()
 
-				// fmt.Println("from database")
-				// fmt.Println(b)
 				ch <- b
 			}
 			wg.Done()
@@ -44,7 +40,7 @@ func main() {
 			case b := <-cacheCh:
 				fmt.Println("from cache")
 				fmt.Println(b)
-				<-dbCh
+				<-dbCh // drain db channel (not a safe approach for a real-world application)
 			case b := <-dbCh:
 				fmt.Println("from db")
 				fmt.Println(b)

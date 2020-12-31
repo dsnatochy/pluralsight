@@ -3,6 +3,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -39,11 +40,24 @@ type europeanUnionIdentifier struct {
 	country string
 }
 
-func NewEuropeanUnionIdentifier(id, country string) Citizen {
-	return europeanUnionIdentifier{
-		id:      id,
-		country: country,
+func NewEuropeanUnionIdentifier(id interface{}, country string) Citizen {
+	switch v := id.(type) {
+	case string:
+		return europeanUnionIdentifier{
+			id:      v,
+			country: country,
+		}
+	case int:
+		return europeanUnionIdentifier{
+			id:      strconv.Itoa(v),
+			country: country,
+		}
+	case europeanUnionIdentifier:
+		return v
+	default:
+		panic("using invalid type to initialize EU Identifier")
 	}
+
 }
 
 func (eui europeanUnionIdentifier) ID() string {
@@ -52,15 +66,6 @@ func (eui europeanUnionIdentifier) ID() string {
 
 func (eui europeanUnionIdentifier) Country() string {
 	return fmt.Sprintf("EU: %s", string(eui.country))
-}
-
-type Name struct {
-	first string
-	last  string
-}
-
-type Employee struct {
-	Name // embedding
 }
 
 // Test
@@ -84,8 +89,21 @@ func (th TwitterHandle) RedirectUrl() string {
 	return fmt.Sprintf("https://www.twitter.com/%s", cleanHandle)
 }
 
+type Name struct {
+	first string
+	last  string
+}
+
+func (n Name) FullName() string {
+	return fmt.Sprintf("%s %s", n.first, n.last)
+}
+
+type Employee struct {
+	name Name
+}
+
 type Person struct {
-	Name          // embeding
+	Name
 	first         string
 	last          string
 	twitterHandle TwitterHandle
@@ -112,11 +130,6 @@ func NewPerson(firstName, lastName string, citizen Citizen) Person {
 		},
 		Citizen: citizen,
 	}
-}
-
-func (n Name) FullName() string {
-
-	return fmt.Sprintf("%s %s", n.first, n.last)
 }
 
 func (p *Person) SetTwitterHandle(handle TwitterHandle) error {
